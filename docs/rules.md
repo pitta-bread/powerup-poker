@@ -9,7 +9,10 @@
 7. Each player can bet a maximum of 1 chip per round (non-continuous betting).
 8. Players can use their power-up card only during the pre-flop betting round,
 and it must be used at the same time as confirming their bet.
-The power-up card is revealed when played.
+Whether a power-up was played remains private during pre-flop betting. Both
+players' used/not-used status is revealed together when post-flop betting
+begins. The power-up type remains private, including at showdown. If the hand
+ends before the flop, power-up use also remains private.
 9. The 5 possible power-ups are as follows:
     1. Increase the value of a card by +1. King goes to Ace.
     2. Decrease the value of a card by -1. Ace goes to King.

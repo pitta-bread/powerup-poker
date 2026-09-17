@@ -1,2 +1,4 @@
 def main() -> None:
-    print("Hello from powerup-poker!")
+    from .cli import main as play
+
+    play()

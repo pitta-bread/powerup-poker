@@ -7,7 +7,10 @@ authors = [
     { name = "pbeards", email = "peterbeardsmore@gmail.com" }
 ]
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "fastapi>=0.141.1",
+    "sqlmodel>=0.0.42",
+]
 
 [project.scripts]
 powerup-poker = "powerup_poker:main"
@@ -15,3 +18,8 @@ powerup-poker = "powerup_poker:main"
 [build-system]
 requires = ["uv_build>=0.12.10,<0.13.0"]
 build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.16.8",
+]
