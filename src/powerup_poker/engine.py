@@ -39,7 +39,9 @@ class Card:
     ABC for a card in any deck. Subclasses should be frozen dataclasses with slots.
     """
 
-    name: str
+    @property
+    def name(self) -> str:
+        return str(self.name)
 
 
 @dataclass(frozen=True, slots=True)
@@ -105,13 +107,9 @@ class Deck:
         self.deck_type: DeckType = deck_type
         self._cards: list[Card]
         if deck_type is DeckType.PLAYING:
-            self._cards = [
-                PlayingCard(rank, suit) for suit in Suit for rank in Rank
-            ]
+            self._cards = [PlayingCard(rank, suit) for suit in Suit for rank in Rank]
         elif deck_type is DeckType.POWER_UP:
-            self._cards = [
-                PowerUpCard(effect) for effect in (list(PowerUpType) * 3)
-            ]
+            self._cards = [PowerUpCard(effect) for effect in (list(PowerUpType) * 3)]
         else:
             raise ValueError("Unknown deck type.")
 
@@ -207,8 +205,15 @@ class Player:
 
 
 HAND_NAMES = (
-    "high card", "pair", "two pair", "three of a kind", "straight",
-    "flush", "full house", "four of a kind", "straight flush",
+    "high card",
+    "pair",
+    "two pair",
+    "three of a kind",
+    "straight",
+    "flush",
+    "full house",
+    "four of a kind",
+    "straight flush",
 )
 
 
@@ -222,8 +227,9 @@ def evaluate_hand(cards: list[PlayingCard]) -> tuple[int, ...]:
 
     def score(hand: tuple[PlayingCard, ...]) -> tuple[int, ...]:
         ranks = sorted((int(card.rank) for card in hand), reverse=True)
-        groups = sorted(((count, rank) for rank, count in Counter(ranks).items()),
-                        reverse=True)
+        groups = sorted(
+            ((count, rank) for rank, count in Counter(ranks).items()), reverse=True
+        )
         counts = [count for count, _ in groups]
         values = tuple(rank for _, rank in groups)
         flush = len({card.suit for card in hand}) == 1
@@ -291,8 +297,9 @@ class GameEngine:
 
     @property
     def game_over(self) -> bool:
-        return (self.state.phase == "finished"
-                and any(player.chips == 0 for player in self.state.players))
+        return self.state.phase == "finished" and any(
+            player.chips == 0 for player in self.state.players
+        )
 
     def legal_actions(self) -> tuple[str, ...]:
         s = self.state
@@ -305,8 +312,14 @@ class GameEngine:
             return ("check", "bet", "fold")
         return ("check", "fold")
 
-    def act(self, player: int, action: str, *, use_power_up: bool = False,
-            target: int | None = None) -> None:
+    def act(
+        self,
+        player: int,
+        action: str,
+        *,
+        use_power_up: bool = False,
+        target: int | None = None,
+    ) -> None:
         """Check, bet one, call one, or fold. Target is a zero-based hole index.
 
         Validate before changing cards or chips, so a rejected move can be retried.
@@ -350,13 +363,15 @@ class GameEngine:
             if len(deck) < 2:
                 raise ValueError("Not enough cards to re-deal.")
             self.state.discards.extend(player.hand)
-            player.hand = [cast(PlayingCard, deck.pop()) for _ in range(2)]
+            player.hand = [deck.pop() for _ in range(2)]
         else:
             if type(target) is not int or target not in (0, 1):
                 raise ValueError("Choose hole card 1 or 2.")
             chosen = player.hand[target]
-            if effect in (PowerUpType.INCREASE_CARD_VALUE,
-                          PowerUpType.DECREASE_CARD_VALUE):
+            if effect in (
+                PowerUpType.INCREASE_CARD_VALUE,
+                PowerUpType.DECREASE_CARD_VALUE,
+            ):
                 delta = 1 if effect == PowerUpType.INCREASE_CARD_VALUE else -1
                 rank = int(chosen.rank) + delta
                 if not 2 <= rank <= 14:
@@ -364,9 +379,12 @@ class GameEngine:
                 player.hand[target] = PlayingCard(Rank(rank), chosen.suit)
             else:
                 rank = Rank.ACE if effect == PowerUpType.AUTO_ACE else chosen.rank
-                candidates = [i for i, card in enumerate(deck)
-                              if card.rank == rank and
-                              (effect == PowerUpType.AUTO_ACE or card.suit != chosen.suit)]
+                candidates = [
+                    i
+                    for i, card in enumerate(deck)
+                    if card.rank == rank
+                    and (effect == PowerUpType.AUTO_ACE or card.suit != chosen.suit)
+                ]
                 if not candidates:
                     raise ValueError("No eligible card remains in the deck.")
                 index = self.rng.choice(candidates)
@@ -386,8 +404,9 @@ class GameEngine:
     def _deal_community(self, count: int) -> None:
         s = self.state
         s.discards.append(cast(PlayingCard, s.playing_deck.draw()))  # Burn.
-        s.community_cards.extend(cast(PlayingCard, s.playing_deck.draw())
-                                 for _ in range(count))
+        s.community_cards.extend(
+            cast(PlayingCard, s.playing_deck.draw()) for _ in range(count)
+        )
 
     def _end_round(self) -> None:
         s = self.state
@@ -418,14 +437,24 @@ class GameEngine:
             raise ValueError("Viewer must be player 0 or 1.")
         s = self.state
         return {
-            "hand_number": s.hand_number, "phase": s.phase, "turn": s.turn,
-            "pot": s.pot, "board": tuple(s.community_cards),
-            "players": tuple({
-                "name": p.name, "chips": p.chips,
-                "hand": tuple(p.hand) if i == viewer or s.showdown else (),
-                "power_ups": tuple(p.power_ups) if i == viewer else (),
-                "played_power_up": p.played_power_up if i == viewer else None,
-                "power_up_used": (p.played_power_up is not None
-                                  if i == viewer or len(s.community_cards) >= 3 else None),
-            } for i, p in enumerate(s.players)),
+            "hand_number": s.hand_number,
+            "phase": s.phase,
+            "turn": s.turn,
+            "pot": s.pot,
+            "board": tuple(s.community_cards),
+            "players": tuple(
+                {
+                    "name": p.name,
+                    "chips": p.chips,
+                    "hand": tuple(p.hand) if i == viewer or s.showdown else (),
+                    "power_ups": tuple(p.power_ups) if i == viewer else (),
+                    "played_power_up": p.played_power_up if i == viewer else None,
+                    "power_up_used": (
+                        p.played_power_up is not None
+                        if i == viewer or len(s.community_cards) >= 3
+                        else None
+                    ),
+                }
+                for i, p in enumerate(s.players)
+            ),
         }
